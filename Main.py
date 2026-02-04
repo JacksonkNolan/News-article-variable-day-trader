@@ -1,7 +1,7 @@
 """
 Financial Sentiment & Market Analysis Engine
 --------------------------------------------
-Author: [Your Name]
+Author: Jackson Nolan
 Description: 
     A quantitative analysis tool that leverages BERT-based NLP (FinBERT) 
     to assess market sentiment from news headlines and correlates it 
@@ -68,6 +68,7 @@ class MarketAnalyzer:
             gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
             loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
             
+            # Avoid division by zero issues
             rs = gain / loss.replace(0, np.nan)
             df['RSI'] = 100 - (100 / (1 + rs))
             df['RSI'] = df['RSI'].fillna(50) # Neutral fill for initial NaNs
@@ -103,15 +104,21 @@ class MarketAnalyzer:
                 if not title:
                     continue
                 
+                # --- UNCOMMENT THE LINE BELOW TO DEBUG HEADLINES ---
+                # print(f"     HEADLINE: {title[:60]}...") 
+
                 # 1. AI Inference
                 if self.sentiment_pipeline:
                     try:
                         result = self.sentiment_pipeline(title)[0]
                         score = result['score']
-                        if result['label'] == 'positive':
+                        label = result['label'].lower() # FIX: Ensure label is lowercase
+                        
+                        if label == 'positive':
                             sentiment_total += score
-                        elif result['label'] == 'negative':
+                        elif label == 'negative':
                             sentiment_total -= score
+                        # Neutral contributes 0.0
                     except:
                         pass # Skip if inference fails
 
@@ -185,8 +192,8 @@ class MarketAnalyzer:
 
         print(f"   Price: ${price:.2f}")
         print(f"   Indicators: RSI={rsi:.1f} | SMA50=${sma50:.2f}")
-        print(f"   Sentiment: AI={ai_score:.2f} | Macro={macro_score:.2f}")
-        print(f"   {color}SIGNAL: {decision} (Confidence: {final_score:.2f})\033[0m")
+        print(f"   Sentiment: AI={ai_score:.3f} | Macro={macro_score:.3f}")
+        print(f"   {color}SIGNAL: {decision} (Confidence: {final_score:.3f})\033[0m")
 
 if __name__ == "__main__":
     # Watchlist for analysis
